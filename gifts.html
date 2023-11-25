@@ -6,9 +6,9 @@
     <title>Julegaver</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="">
+  <body>
     <div class="bg-white px-6 py-24 sm:py-32 lg:px-8">
-      <div class="mx-auto max-w-sm">
+      <div class="mx-auto max-w-lg">
         <h2 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
           Julegaver
         </h2>
@@ -43,7 +43,7 @@
               type="button"
               class="bg-gray-200 text-gray-600 px-4 py-2 rounded hover:bg-gray-300 active:bg-gray-400"
             >
-              Legg til fler
+              Legg til navn
             </button>
             <button
               id="create-list-button"
@@ -57,6 +57,7 @@
             id="result"
             class="mt-4 p-4 list-disc list-inside transition-transform duration-300 ease-in-out origin-left space-y-1"
           ></ul>
+          <div id="code" class="break-words"></div>
         </div>
       </div>
     </div>
@@ -64,8 +65,9 @@
   <script>
     const addMoreButton = document.getElementById("add-more-button");
     const createListButton = document.getElementById("create-list-button");
+    const codeResult = document.getElementById("code");
 
-    addMoreButton.addEventListener("click", () => {
+    const addNameInput = (value) => {
       const currentNumberOfNames =
         document.querySelectorAll(".name-input").length;
       const newInput = document.createElement("input");
@@ -81,22 +83,77 @@
         "px-4"
       );
       newInput.placeholder = `Navn ${currentNumberOfNames + 1}`;
+      if (value) {
+        newInput.value = value;
+      }
       document.getElementById("name-inputs").appendChild(newInput);
-    });
+    };
+
+    addMoreButton.addEventListener("click", () => addNameInput());
+
+    const namesToListItem = (giverName, receiverName) => {
+      return `
+          <li>
+            <span class="font-bold">${giverName}</span> gir til <span class="font-bold">${receiverName}</span>
+          </li>`;
+    };
+
+    const showCode = (url) => {
+      document.getElementById("code").innerHTML = `
+        <p class="mt-6">Del listen med denne lenken:</p>
+        <a href="${url}" class="text-blue-500 hover:underline">${url}</a>
+      `;
+    };
+
+    const encodeList = (list) => {
+      // Create a string representation of the list
+      const listString = JSON.stringify(list);
+
+      // Encode the string to Base64
+      const encodedListString = btoa(listString);
+
+      // Append the encoded string to the URL
+      let url = window.location.href.split("?")[0];
+      url = `${url}?l=${encodedListString}`;
+
+      window.history.pushState({ path: url }, "", url);
+
+      showCode(url);
+    };
+
+    const decodeList = () => {
+      const params = new URLSearchParams(window.location.search);
+      const encodedListString = params.get("l");
+      if (encodedListString) {
+        document.getElementById("result").innerHTML = "";
+        const listString = atob(encodedListString);
+        const list = JSON.parse(listString);
+        list.forEach((item) => {
+          result.innerHTML += namesToListItem(item.g, item.r);
+        });
+        showCode(window.location.href);
+        document.getElementById("name-inputs").innerHTML = "";
+        list.forEach((item) => {
+          addNameInput(item.g);
+        });
+      }
+    };
 
     const createList = () => {
       const result = document.getElementById("result");
       const oldResult = result.innerHTML;
       result.innerHTML = "";
+      codeResult.innerHTML = "";
+      const list = [];
 
       const nameInputs = document.querySelectorAll(".name-input");
       let giverNames = [...nameInputs]
         .map((input) => input.value)
         .filter((name) => name !== "");
 
-      if (giverNames.length < 2) {
+      if (giverNames.length < 3) {
         result.innerHTML =
-          "<span class='font-bold'>Du må ha minst to navn</span>";
+          "<span class='font-bold'>Du må ha minst tre navn</span>";
         return;
       }
 
@@ -115,10 +172,8 @@
         const receiverName = receiverNames.filter((name) => name !== giverName)[
           Math.floor(Math.random() * (receiverNames.length - 1))
         ];
-        result.innerHTML += `
-          <li>
-            <span class="font-bold">${giverName}</span> gir til <span class="font-bold">${receiverName}</span>
-          </li>`;
+        result.innerHTML += namesToListItem(giverName, receiverName);
+        list.push({ g: giverName, r: receiverName });
         receiverNames = receiverNames.filter((name) => name !== receiverName);
         giverNames = giverNames.filter((name) => name !== giverName);
       });
@@ -130,14 +185,19 @@
         oldResult === result.innerHTML
       ) {
         createList();
-      } else {
-        const timeout = setTimeout(() => {
-          result.classList.remove("scale-110");
-          createListButton.disabled = false;
-        }, 600);
+        return;
       }
+
+      const timeout = setTimeout(() => {
+        result.classList.remove("scale-110");
+        createListButton.disabled = false;
+      }, 600);
+
+      encodeList(list);
     };
 
     createListButton.addEventListener("click", createList);
+    document.addEventListener("DOMContentLoaded", decodeList);
+    window.addEventListener("popstate", decodeList);
   </script>
 </html>

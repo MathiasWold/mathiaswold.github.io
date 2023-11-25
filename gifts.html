@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Julegaver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="">
+    <div class="bg-white px-6 py-24 sm:py-32 lg:px-8">
+      <div class="mx-auto max-w-sm">
+        <h2 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+          Julegaver
+        </h2>
+        <div class="text-gray-600 text-l">
+          <p class="mt-6">Skriv inn navn på alle som skal gi og få gave:</p>
+          <div id="name-inputs" class="flex flex-col gap-y-4 py-4">
+            <input
+              type="text"
+              name="name1"
+              id="name1"
+              class="name-input border border-gray-300 rounded py-2 px-4"
+              placeholder="Navn 1"
+            />
+            <input
+              type="text"
+              name="name2"
+              id="name2"
+              class="name-input border border-gray-300 rounded py-2 px-4"
+              placeholder="Navn 2"
+            />
+            <input
+              type="text"
+              name="name3"
+              id="name3"
+              class="name-input border border-gray-300 rounded py-2 px-4"
+              placeholder="Navn 3"
+            />
+          </div>
+          <div class="flex justify-end gap-x-4">
+            <button
+              id="add-more-button"
+              type="button"
+              class="bg-gray-200 text-gray-600 px-4 py-2 rounded hover:bg-gray-300 active:bg-gray-400"
+            >
+              Legg til fler
+            </button>
+            <button
+              id="create-list-button"
+              type="button"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 disabled:cursor-progress"
+            >
+              Lag liste
+            </button>
+          </div>
+          <ul
+            id="result"
+            class="mt-4 p-4 list-disc list-inside transition-transform duration-300 ease-in-out origin-left space-y-1"
+          ></ul>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    const addMoreButton = document.getElementById("add-more-button");
+    const createListButton = document.getElementById("create-list-button");
+
+    addMoreButton.addEventListener("click", () => {
+      const currentNumberOfNames =
+        document.querySelectorAll(".name-input").length;
+      const newInput = document.createElement("input");
+      newInput.type = "text";
+      newInput.name = `name${currentNumberOfNames + 1}`;
+      newInput.id = `name${currentNumberOfNames + 1}`;
+      newInput.classList.add(
+        "name-input",
+        "border",
+        "border-gray-300",
+        "rounded",
+        "py-2",
+        "px-4"
+      );
+      newInput.placeholder = `Navn ${currentNumberOfNames + 1}`;
+      document.getElementById("name-inputs").appendChild(newInput);
+    });
+
+    const createList = () => {
+      const result = document.getElementById("result");
+      const oldResult = result.innerHTML;
+      result.innerHTML = "";
+
+      const nameInputs = document.querySelectorAll(".name-input");
+      let giverNames = [...nameInputs]
+        .map((input) => input.value)
+        .filter((name) => name !== "");
+
+      if (giverNames.length < 2) {
+        result.innerHTML =
+          "<span class='font-bold'>Du må ha minst to navn</span>";
+        return;
+      }
+
+      if (giverNames.length !== new Set(giverNames).size) {
+        result.innerHTML =
+          "<span class='font-bold'>Du kan ikke ha to navn som er like</span>";
+        return;
+      }
+
+      createListButton.disabled = true;
+
+      giverNames.sort(() => Math.random() - 0.5);
+      let receiverNames = [...giverNames];
+
+      giverNames.forEach((giverName) => {
+        const receiverName = receiverNames.filter((name) => name !== giverName)[
+          Math.floor(Math.random() * (receiverNames.length - 1))
+        ];
+        result.innerHTML += `
+          <li>
+            <span class="font-bold">${giverName}</span> gir til <span class="font-bold">${receiverName}</span>
+          </li>`;
+        receiverNames = receiverNames.filter((name) => name !== receiverName);
+        giverNames = giverNames.filter((name) => name !== giverName);
+      });
+
+      result.classList.add("scale-110");
+
+      if (
+        result.innerHTML.includes("undefined") ||
+        oldResult === result.innerHTML
+      ) {
+        createList();
+      } else {
+        const timeout = setTimeout(() => {
+          result.classList.remove("scale-110");
+          createListButton.disabled = false;
+        }, 600);
+      }
+    };
+
+    createListButton.addEventListener("click", createList);
+  </script>
+</html>

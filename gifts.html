@@ -39,6 +39,13 @@
           </div>
           <div class="flex justify-end gap-x-4">
             <button
+              type="button"
+              id="reset-button"
+              class="text-blue-500 px-2 py-2 hover:underline"
+            >
+              Tilbakestill
+            </button>
+            <button
               id="add-more-button"
               type="button"
               class="bg-gray-200 text-gray-600 px-4 py-2 rounded hover:bg-gray-300 active:bg-gray-400"
@@ -65,6 +72,7 @@
   <script>
     const addMoreButton = document.getElementById("add-more-button");
     const createListButton = document.getElementById("create-list-button");
+    const resetButton = document.getElementById("reset-button");
     const codeResult = document.getElementById("code");
 
     const addNameInput = (value) => {
@@ -105,6 +113,25 @@
       `;
     };
 
+    const resetUI = () => {
+      document.getElementById("result").innerHTML = "";
+      document.getElementById("name-inputs").innerHTML = "";
+      addNameInput();
+      addNameInput();
+      addNameInput();
+      document.getElementById("code").innerHTML = "";
+    };
+
+    const resetURL = () => {
+      const url = window.location.href.split("?")[0];
+      window.history.pushState({ path: url }, "", url);
+    };
+
+    resetButton.addEventListener("click", () => {
+      resetUI();
+      resetURL();
+    });
+
     const encodeList = (list) => {
       // Create a string representation of the list
       const listString = JSON.stringify(list);
@@ -121,7 +148,7 @@
       showCode(url);
     };
 
-    const decodeList = () => {
+    const initList = () => {
       const params = new URLSearchParams(window.location.search);
       const encodedListString = params.get("l");
       if (encodedListString) {
@@ -136,6 +163,8 @@
         list.forEach((item) => {
           addNameInput(item.g);
         });
+      } else {
+        resetUI();
       }
     };
 
@@ -197,7 +226,7 @@
     };
 
     createListButton.addEventListener("click", createList);
-    document.addEventListener("DOMContentLoaded", decodeList);
-    window.addEventListener("popstate", decodeList);
+    document.addEventListener("DOMContentLoaded", initList);
+    window.addEventListener("popstate", initList);
   </script>
 </html>
